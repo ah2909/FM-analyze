@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from json_repair import repair_json
 import google.generativeai as genai
 from google.generativeai.types import GenerationConfig
 
@@ -33,7 +34,6 @@ def _get_risk_schema() -> dict:
                                     "enum": ["safe", "moderate", "high", "extreme"],
                                 },
                             },
-                            "required": ["symbol", "percentage", "flag"],
                         },
                     },
                     "herfindahl_index": {
@@ -73,7 +73,6 @@ def _get_risk_schema() -> dict:
                                 "pnl":     {"type": "NUMBER"},
                                 "pnl_pct": {"type": "NUMBER"},
                             },
-                            "required": ["symbol", "invested", "current", "pnl", "pnl_pct"],
                         },
                     },
                 },
@@ -147,12 +146,12 @@ def _parse_json_response(text: str) -> dict:
     except json.JSONDecodeError:
         pass
 
-    # Last resort: extract the first {...} block
-    match = re.search(r"\{.*\}", cleaned, re.DOTALL)
-    if match:
-        return json.loads(match.group())
-
-    raise ValueError(f"Cannot parse JSON from Gemini response. First 300 chars: {text[:300]!r}")
+    # Last resort: use json_repair to fix malformed JSON (unescaped quotes, missing commas, etc.)
+    repaired = repair_json(cleaned)
+    result = json.loads(repaired)
+    if not isinstance(result, dict):
+        raise ValueError(f"Cannot parse JSON from Gemini response. First 300 chars: {text[:300]!r}")
+    return result
 
 
 def run_risk_assessor(state: AnalysisState) -> dict:

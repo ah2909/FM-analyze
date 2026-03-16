@@ -1,3 +1,4 @@
+debugpy==1.8.14
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.3
 aiosignal==1.4.0
@@ -76,4 +77,5 @@ uvloop==0.22.1
 watchfiles==1.1.1
 websockets==16.0
 yarl==1.22.0
+json-repair==0.30.3
 zstandard==0.23.0
