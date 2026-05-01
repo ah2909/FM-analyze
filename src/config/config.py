@@ -8,7 +8,7 @@ load_dotenv(override=True)
 
 class LLMConfig:
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "")
     TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.4"))
     MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "8192"))
 
@@ -31,9 +31,9 @@ class IndicatorConfig:
 class APIConfig:
     PORT: int = int(os.getenv("PORT", "7070"))
     HOST: str = os.getenv("HOST", "0.0.0.0")
-    CACHE_TTL: int = int(os.getenv("ANALYSIS_CACHE_TTL", "300"))
     ENV: str = os.getenv("APP_ENV", "development")
-    GRAPH_TIMEOUT: int = int(os.getenv("GRAPH_TIMEOUT", "90"))
+    BACKEND_URL: str = os.getenv("BACKEND_URL", "http://backend:8000")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 
 LLM = LLMConfig()
