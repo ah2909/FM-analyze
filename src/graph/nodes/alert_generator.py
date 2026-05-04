@@ -1,10 +1,10 @@
-import json
 import logging
 import google.generativeai as genai
 from google.generativeai.types import GenerationConfig
 
 from ..state import AnalysisState, Alert
 from ...config.config import LLM
+from ..utils import parse_json_response
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ def run_alert_generator(state: AnalysisState) -> dict:
 
     try:
         response = model.generate_content(_build_prompt(state))
-        data = json.loads(response.text)
+        data = parse_json_response(response.text)
         alerts: list[Alert] = data.get("alerts", [])
         logger.info(f"alert_generator: {len(alerts)} alerts for user {state['user_id']}")
         # Return as list so the operator.add reducer appends correctly

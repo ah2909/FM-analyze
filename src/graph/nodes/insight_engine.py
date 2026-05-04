@@ -1,10 +1,10 @@
-import json
 import logging
 import google.generativeai as genai
 from google.generativeai.types import GenerationConfig
 
 from ..state import AnalysisState, Insights
 from ...config.config import LLM
+from ..utils import parse_json_response
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +29,24 @@ def _get_insight_schema() -> dict:
                 "enum": ["strongly_aligned", "aligned", "neutral",
                          "misaligned", "strongly_misaligned"],
             },
+            "diversification_score": {
+                "type": "NUMBER",
+                "description": "Portfolio diversification score 0-100; higher is better",
+            },
+            "diversification_notes": {
+                "type": "STRING",
+                "description": "Brief explanation of the diversification score",
+            },
             "recommendations": {
                 "type": "ARRAY",
                 "items": {"type": "STRING"},
                 "description": "3-5 concrete actionable recommendations",
             },
         },
-        "required": ["best_performers", "worst_performers", "market_trend_alignment", "recommendations"],
+        "required": [
+            "best_performers", "worst_performers", "diversification_score",
+            "diversification_notes", "market_trend_alignment", "recommendations",
+        ],
     }
 
 
@@ -90,7 +101,7 @@ def run_insight_engine(state: AnalysisState) -> dict:
 
     try:
         response = model.generate_content(_build_prompt(state))
-        insights: Insights = json.loads(response.text)
+        insights: Insights = parse_json_response(response.text)
         logger.info(f"insight_engine: Analyzed successfully for user {state['user_id']}")
         return {"insights": insights}
     except Exception as exc:

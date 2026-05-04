@@ -1,12 +1,10 @@
-import json
 import logging
-import re
-from json_repair import repair_json
 import google.generativeai as genai
 from google.generativeai.types import GenerationConfig
 
 from ..state import AnalysisState, RiskAssessment
 from ...config.config import LLM
+from ..utils import parse_json_response
 
 logger = logging.getLogger(__name__)
 
@@ -130,29 +128,6 @@ Consider concentration risk (HHI), volatility signals from RSI/MACD/Bollinger Ba
 unrealized PnL and drawdown. Return ONLY valid JSON matching the schema."""
 
 
-def _parse_json_response(text: str) -> dict:
-    """Parse JSON from Gemini response, handling markdown fences and stray characters."""
-    # Direct parse (happy path)
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
-
-    # Strip markdown fences: ```json ... ``` or ``` ... ```
-    cleaned = re.sub(r"^```(?:json)?\s*", "", text.strip())
-    cleaned = re.sub(r"\s*```$", "", cleaned)
-    try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError:
-        pass
-
-    # Last resort: use json_repair to fix malformed JSON (unescaped quotes, missing commas, etc.)
-    repaired = repair_json(cleaned)
-    result = json.loads(repaired)
-    if not isinstance(result, dict):
-        raise ValueError(f"Cannot parse JSON from Gemini response. First 300 chars: {text[:300]!r}")
-    return result
-
 
 def run_risk_assessor(state: AnalysisState) -> dict:
     """LangGraph node — Node 2. Calls Gemini with structured output for risk analysis."""
@@ -180,7 +155,7 @@ def run_risk_assessor(state: AnalysisState) -> dict:
         response = model.generate_content(prompt)
         logger.info(f"risk_assessor: Raw response: {response.text}")
 
-        risk: RiskAssessment = _parse_json_response(response.text)
+        risk: RiskAssessment = parse_json_response(response.text)
         logger.info(f"risk_assessor: Risk score={risk.get('risk_score')} for user {state['user_id']}")
         return {"risk_assessment": risk}
         
