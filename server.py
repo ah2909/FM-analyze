@@ -11,11 +11,6 @@ if __name__ == "__main__":
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    if API.ENV == "development":
-        import debugpy
-        debugpy.listen(("0.0.0.0", 5678))
-        logger.info("debugpy listening on port 5678 — attach VS Code to debug")
-
     logger.info(f"Starting Portfolio Analyzer on port {API.PORT}")
     logger.info(f"LLM Model : {LLM.GEMINI_MODEL}")
 

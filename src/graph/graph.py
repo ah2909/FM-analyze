@@ -16,9 +16,9 @@ def build_graph() -> StateGraph:
           ↓
         fetch_market_data   (CoinGecko + pandas/ta indicators)
           ↓
-        risk_assessor       (Gemini structured output)
+        risk_assessor       (Python metrics + Gemini judgment)
           ↓
-        alert_generator     (Gemini structured output — reads risk_assessment)
+        alert_generator     (deterministic threshold rules — no LLM)
           ↓
         insight_engine      (Gemini structured output — reads risk + alerts)
           ↓

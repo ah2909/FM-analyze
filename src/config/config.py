@@ -16,7 +16,9 @@ class LLMConfig:
 class CoinGeckoConfig:
     API_KEY: str = os.getenv("COINGECKO_API_KEY", "")
     BASE_URL: str = os.getenv("COINGECKO_URL", "https://api.coingecko.com/api/v3")
-    HISTORY_DAYS: int = int(os.getenv("COINGECKO_HISTORY_DAYS", "90"))
+    # >30 days forces 4-day candles (~23 pts/90d) — too few for MACD(35). ≤30 → 4h candles.
+    HISTORY_DAYS: int = int(os.getenv("COINGECKO_HISTORY_DAYS", "30"))
+    IS_PRO: bool = os.getenv("COINGECKO_PRO", "false").lower() == "true"
 
 
 class IndicatorConfig:

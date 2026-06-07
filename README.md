@@ -38,9 +38,9 @@ graph TD
 ```
 
 1.  **fetch_market_data**: Ingests the portfolio and fetches current prices and history.
-2.  **risk_assessor**: First LLM pass to determine overall risk score and PnL analysis.
-3.  **alert_generator**: Second LLM pass focusing on technical triggers and volatility.
-4.  **insight_engine**: Final LLM pass providing human-readable strategic summaries and recommendations.
+2.  **risk_assessor**: Computes concentration (HHI), allocations, and PnL deterministically in Python; Gemini judges the risk score, volatility level, and summary.
+3.  **alert_generator**: Deterministic threshold rules (RSI, imbalance, drawdown, take-profit) — no LLM.
+4.  **insight_engine**: LLM pass providing human-readable strategic summaries and recommendations.
 5.  **aggregator**: Merges all findings into a single, structured JSON payload.
 
 ---

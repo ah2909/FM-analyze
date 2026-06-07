@@ -70,42 +70,51 @@ def _symbol_to_id(symbol: str, cg: CoinGeckoAPI) -> str:
 
 
 def _calculate_indicators(prices: list[float]) -> dict:
-    """Run RSI, MACD, and Bollinger Bands via the ta library on a closing price series."""
-    min_needed = INDICATORS.MACD_SLOW + INDICATORS.MACD_SIGNAL
-    if len(prices) < min_needed:
-        return {
-            "rsi": None, "macd": None, "macd_signal": None,
-            "macd_hist": None, "bb_upper": None, "bb_middle": None, "bb_lower": None,
-        }
+    """Run RSI, MACD, and Bollinger Bands; each indicator computed only if it has enough data."""
+    result = {
+        "rsi": None, "macd": None, "macd_signal": None,
+        "macd_hist": None, "bb_upper": None, "bb_middle": None, "bb_lower": None,
+    }
+    n = len(prices)
+    if n == 0:
+        return result
 
     series = pd.Series(prices, dtype=float)
-
-    rsi_ind = ta.momentum.RSIIndicator(close=series, window=INDICATORS.RSI_PERIOD)
-    macd_ind = ta.trend.MACD(
-        close=series,
-        window_fast=INDICATORS.MACD_FAST,
-        window_slow=INDICATORS.MACD_SLOW,
-        window_sign=INDICATORS.MACD_SIGNAL,
-    )
-    bb_ind = ta.volatility.BollingerBands(
-        close=series,
-        window=INDICATORS.BB_PERIOD,
-        window_dev=INDICATORS.BB_STD_DEV,
-    )
 
     def _last(s: pd.Series) -> float | None:
         val = s.iloc[-1]
         return None if pd.isna(val) else float(val)
 
-    return {
-        "rsi":         _last(rsi_ind.rsi()),
-        "macd":        _last(macd_ind.macd()),
-        "macd_signal": _last(macd_ind.macd_signal()),
-        "macd_hist":   _last(macd_ind.macd_diff()),
-        "bb_upper":    _last(bb_ind.bollinger_hband()),
-        "bb_middle":   _last(bb_ind.bollinger_mavg()),
-        "bb_lower":    _last(bb_ind.bollinger_lband()),
-    }
+    if n >= INDICATORS.RSI_PERIOD + 1:
+        result["rsi"] = _last(
+            ta.momentum.RSIIndicator(close=series, window=INDICATORS.RSI_PERIOD).rsi()
+        )
+
+    if n >= INDICATORS.MACD_SLOW + INDICATORS.MACD_SIGNAL:
+        macd_ind = ta.trend.MACD(
+            close=series,
+            window_fast=INDICATORS.MACD_FAST,
+            window_slow=INDICATORS.MACD_SLOW,
+            window_sign=INDICATORS.MACD_SIGNAL,
+        )
+        result["macd"] = _last(macd_ind.macd())
+        result["macd_signal"] = _last(macd_ind.macd_signal())
+        result["macd_hist"] = _last(macd_ind.macd_diff())
+
+    if n >= INDICATORS.BB_PERIOD:
+        bb_ind = ta.volatility.BollingerBands(
+            close=series,
+            window=INDICATORS.BB_PERIOD,
+            window_dev=INDICATORS.BB_STD_DEV,
+        )
+        result["bb_upper"] = _last(bb_ind.bollinger_hband())
+        result["bb_middle"] = _last(bb_ind.bollinger_mavg())
+        result["bb_lower"] = _last(bb_ind.bollinger_lband())
+
+    if n < INDICATORS.MACD_SLOW + INDICATORS.MACD_SIGNAL:
+        logger.warning(f"Only {n} candles — MACD/longer indicators may be unavailable")
+
+    return result
 
 
 def fetch_market_data(state: AnalysisState) -> dict:
@@ -115,7 +124,11 @@ def fetch_market_data(state: AnalysisState) -> dict:
     every asset in the portfolio. Always emits one AssetIndicators entry per asset
     (uses stubs on failure so downstream LLM nodes never crash on a missing index).
     """
-    cg = CoinGeckoAPI(demo_api_key=COINGECKO.API_KEY)
+    cg = (
+        CoinGeckoAPI(api_key=COINGECKO.API_KEY)
+        if COINGECKO.IS_PRO
+        else CoinGeckoAPI(demo_api_key=COINGECKO.API_KEY)
+    )
     market_data: list[AssetIndicators] = []
     errors: list[str] = []
 
