@@ -3,8 +3,8 @@ import google.generativeai as genai
 from google.generativeai.types import GenerationConfig
 
 from ..state import AnalysisState, Insights
-from ...config.config import LLM
-from ..utils import parse_json_response
+from ...config import LLM
+from ...shared.utils import parse_json_response
 
 logger = logging.getLogger(__name__)
 

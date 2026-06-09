@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from ..graph.graph import analysis_graph
+from ..analyze_portfolio.graph import analysis_graph
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

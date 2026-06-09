@@ -4,69 +4,10 @@ import ta
 from pycoingecko import CoinGeckoAPI
 
 from ..state import AnalysisState, AssetIndicators
-from ...config.config import COINGECKO, INDICATORS
+from ...shared.coingecko_ids import symbols_to_ids as _symbols_to_ids
+from ...config import COINGECKO, INDICATORS
 
 logger = logging.getLogger(__name__)
-
-# Hardcoded overrides for common coins or ones where the symbol-to-id is tricky.
-_SYMBOL_TO_ID_OVERRIDES: dict[str, str] = {
-    "BTC": "bitcoin",
-    "ETH": "ethereum",
-    "BNB": "binancecoin",
-    "SOL": "solana",
-    "ADA": "cardano",
-    "DOGE": "dogecoin",
-    "XRP": "ripple",
-    "DOT": "polkadot",
-    "AVAX": "avalanche-2",
-    "MATIC": "matic-network",
-    "LINK": "chainlink",
-    "UNI": "uniswap",
-    "LTC": "litecoin",
-    "ATOM": "cosmos",
-    "NEAR": "near",
-    "TRX": "tron",
-    "SHIB": "shiba-inu",
-    "TON": "the-open-network",
-    "SUI": "sui",
-    "APT": "aptos",
-}
-
-# Cache for the full mapping from CoinGecko
-_SYMBOL_MAP_CACHE: dict[str, str] = {}
-
-
-def _get_symbol_to_id_map(cg: CoinGeckoAPI) -> dict[str, str]:
-    """
-    Fetches the full list of coins from CoinGecko and builds a symbol -> id mapping.
-    Caches the result globally to avoid redundant heavy API calls.
-    """
-    global _SYMBOL_MAP_CACHE
-    if _SYMBOL_MAP_CACHE and len(_SYMBOL_MAP_CACHE) > len(_SYMBOL_TO_ID_OVERRIDES):
-        return _SYMBOL_MAP_CACHE
-
-    _SYMBOL_MAP_CACHE = _SYMBOL_TO_ID_OVERRIDES.copy()
-
-    try:
-        coins = cg.get_coins_list()
-        for c in coins:
-            sym = c["symbol"].upper()
-            cid = c["id"]
-            
-            if sym not in _SYMBOL_TO_ID_OVERRIDES:
-                if sym not in _SYMBOL_MAP_CACHE or cid == sym.lower():
-                    _SYMBOL_MAP_CACHE[sym] = cid
-
-    except Exception as e:
-        logger.error(f"Failed to fetch coins list from CoinGecko: {e}")
-
-    return _SYMBOL_MAP_CACHE
-
-
-def _symbol_to_id(symbol: str, cg: CoinGeckoAPI) -> str:
-    """Resolves a symbol to a CoinGecko ID using cache + overrides."""
-    mapping = _get_symbol_to_id_map(cg)
-    return mapping.get(symbol.upper(), symbol.lower())
 
 
 def _calculate_indicators(prices: list[float]) -> dict:
@@ -132,9 +73,12 @@ def fetch_market_data(state: AnalysisState) -> dict:
     market_data: list[AssetIndicators] = []
     errors: list[str] = []
 
+    # Resolve the whole portfolio in one market-cap-ordered call to stay within rate limits.
+    coin_ids = _symbols_to_ids([a["symbol"] for a in state["portfolio"]], cg)
+
     for asset in state["portfolio"]:
         symbol = asset["symbol"].upper()
-        coin_id = _symbol_to_id(symbol, cg)
+        coin_id = coin_ids[symbol]
 
         try:
             ohlc = cg.get_coin_ohlc_by_id(

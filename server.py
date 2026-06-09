@@ -1,7 +1,7 @@
 import logging
 import uvicorn
 
-from src.config.config import API, LLM
+from src.config import API, LLM
 
 logger = logging.getLogger(__name__)
 

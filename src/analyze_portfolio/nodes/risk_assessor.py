@@ -3,8 +3,8 @@ import google.generativeai as genai
 from google.generativeai.types import GenerationConfig
 
 from ..state import AnalysisState, RiskAssessment
-from ...config.config import LLM
-from ..utils import parse_json_response
+from ...config import LLM
+from ...shared.utils import parse_json_response
 from ..metrics import compute_concentration, compute_pnl, compute_volatility_assets
 
 logger = logging.getLogger(__name__)

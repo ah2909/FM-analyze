@@ -3,7 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routes.analyzer import router
-from .config.config import API
+from .routes.research import router as research_router
+from .config import API
 
 logging.basicConfig(
     level=logging.DEBUG if API.ENV == "development" else logging.INFO,
@@ -26,3 +27,4 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(research_router)
