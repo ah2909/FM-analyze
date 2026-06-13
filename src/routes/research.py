@@ -31,13 +31,9 @@ async def research_token(request: ResearchRequest):
         raise HTTPException(status_code=400, detail="symbol cannot be empty")
 
     initial_state = {
-        "user_id":           request.user_id,
-        "assets":            [{"symbol": request.symbol, "name": request.name or request.symbol,
-                               "amount": 0.0, "avg_price": 0.0}],
-        "retrieved":         {},
-        "per_asset_outlook": [],
-        "final_output":      None,
-        "errors":            [],
+        "symbol": request.symbol,
+        "name":   request.name or request.symbol,
+        "errors": [],
     }
 
     try:

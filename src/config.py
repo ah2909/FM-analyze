@@ -42,6 +42,9 @@ class ResearchConfig:
     NEWS_RECENCY_DAYS: int = int(os.getenv("RESEARCH_NEWS_RECENCY_DAYS", "60"))
     MAX_CONCURRENCY: int = int(os.getenv("RESEARCH_MAX_CONCURRENCY", "5"))
     HTTP_TIMEOUT: float = float(os.getenv("RESEARCH_HTTP_TIMEOUT", "15"))
+    UNLOCK_HORIZON_DAYS: int = int(os.getenv("RESEARCH_UNLOCK_HORIZON_DAYS", "365"))
+    # A single day's unlock must be >= this % of max supply to count as a catalyst.
+    UNLOCK_NOTABLE_PCT: float = float(os.getenv("RESEARCH_UNLOCK_NOTABLE_PCT", "0.5"))
 
 
 LLM = LLMConfig()

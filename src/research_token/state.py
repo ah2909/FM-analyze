@@ -7,12 +7,10 @@ class AssetRef(TypedDict):
     symbol: str
     name: str
     coingecko_id: str
-    amount: float
-    avg_price: float
 
 
 class SourceResult(TypedDict):
-    source_name: str       # "tokenomics" | "news" | "dev"
+    source_name: str       # "tokenomics" | "news" | "dev" | "unlocks"
     url: str
     fetched_at: str        # ISO timestamp
     available: bool
@@ -34,15 +32,18 @@ class NodeError(TypedDict):
 
 
 class OutlookState(TypedDict):
-    # Input — set before graph.ainvoke(); one asset per request
-    user_id: str
-    assets: list[AssetRef]
+    # Input — set before graph.ainvoke(); one token per request
+    symbol: str
+    name: str
+
+    # Set by resolve_asset node
+    asset: AssetRef | None
 
     # Set by retrieve node
-    retrieved: dict[str, AssetData]            # keyed by coingecko_id
+    retrieved: AssetData | None
 
     # Set by synthesize/validate nodes
-    per_asset_outlook: list[dict[str, Any]]    # AssetOutlook objects (§6)
+    outlook: dict[str, Any] | None        # AssetOutlook object (§6)
 
     # Set by persist node
     final_output: dict[str, Any] | None
